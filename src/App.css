@@ -14,12 +14,16 @@
 
 .notes {
   margin: 5%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 .note {
   width: 15em;
   height: 10em;
   overflow: hidden;
   padding: 1%;
+  margin: 1%;
 }
 
 .edit-icon {
@@ -30,4 +34,25 @@
 .note-title {
   margin-top: 2%;
   margin-bottom: 2%;
+  margin-left: 12%;
+}
+
+.add-icon {
+  margin-bottom: 2%;
+}
+
+.add-note {
+  width: 100%;
+}
+
+.input {
+  margin: 2% 0 2% 0;
+}
+
+.save-button {
+  width: 5em;
+}
+.delete-button {
+  width: 5em;
+  margin-right: 2%;
 }
