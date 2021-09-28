@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState} from 'react';
 import React from "react";
 import './App.css';
 import { uiColors } from '@leafygreen-ui/palette';
@@ -6,7 +6,6 @@ import { H1, H3 } from '@leafygreen-ui/typography';
 import {
     LogoMark
 } from '@leafygreen-ui/logo';
-// import { ReactComponent as Logo } from './MongoDB_Logo_Leaf.svg'
 import Icon from '@leafygreen-ui/icon';
 import Button from '@leafygreen-ui/button';
 import Form from './components/Form';
@@ -16,9 +15,12 @@ import Modal from '@leafygreen-ui/modal';
 import TextInput from '@leafygreen-ui/text-input';
 import Banner from '@leafygreen-ui/banner';
 
+const REALM_APP_ID = "leafy-green-notes-uwhsz";
+const app: Realm.App = new Realm.App({ id: REALM_APP_ID });
+const mongodb = app.currentUser.mongoClient("mongodb-atlas");
+const notesCollection=mongodb.db('Leafy-Green-Notes').collection("Notes")
+
 // Load
-
-
 let myNotes
 if (!localStorage.getItem('myNotes')) {
     localStorage.setItem('myNotes', JSON.stringify([]))
@@ -26,30 +28,26 @@ if (!localStorage.getItem('myNotes')) {
     myNotes = JSON.parse(localStorage.getItem('myNotes'))
 }
 
-
 function saveNotesChanges() {
     localStorage.setItem('myNotes', JSON.stringify(myNotes))
 }
 
-// declare function assert(value: unknown): asserts value;
 var assert = require('assert')
+let notes=[];
+
 function Home() {
-    const REALM_APP_ID = "leafy-green-notes-uwhsz";
-    const app: Realm.App = new Realm.App({ id: REALM_APP_ID });
-
-
     const [user, setUser] = React.useState<Realm.User | null>(app.currentUser);
     const [openSignup, setOpenSignup] = useState(false);
     const [openLogin, setOpenLogin] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [openBanner, setOpenBanner] = useState(false)
-
     const [open, setOpen] = useState(false);
     const [selectedNote, setSelectedNote] = useState(-1)
 
 
     window.onload = function exampleFunction() {
+        
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         // const urlParams = new URLSearchParams(window.location.search);
@@ -70,13 +68,6 @@ function Home() {
         setOpenBanner(curr => !curr)
     }
 
-    // function loginUser(email, password) {
-    //     const credentials = Realm.Credentials.emailPassword(email, password)
-    //     const user: Realm.User = app.logIn(credentials)
-    //     setUser(user)
-    //     setOpenLogin(curr => !curr)
-    // }
-
     async function loginUser(email: string, password: string) {
         // Create an anonymous credential
         const credentials = Realm.Credentials.emailPassword(email, password);
@@ -85,22 +76,28 @@ function Home() {
             const user: Realm.User = await app.logIn(credentials);
             // `App.currentUser` updates to match the logged in user
             assert(user.id === app.currentUser.id)
+            setUser(user)
             setOpenLogin(curr => !curr)
             return user
         } catch (err) {
             console.error("Failed to log in", err);
         }
     }
-
-    // function initializeUserNotes(){
-    //     const mongodb = app.currentUser.mongoClient("mongodb-atlas");
-    // }
+   
+    async function initializeUserNotes(){
+        notes = await notesCollection.find()
+        console.log(notes)
+        console.log('it ran!')
+    }
+    
 
     function createNote(title, content) {
         myNotes.push({
             title: title,
             content: content
         })
+        
+        notesCollection.insertOne({"title": title, "content": content, "owner_id":app.currentUser.id})
         setOpen(curr => !curr)
         saveNotesChanges()
     }
@@ -115,7 +112,6 @@ function Home() {
     }
 
     function handleNoteDelete() {
-
         console.log(selectedNote)
         if (selectedNote > -1 && selectedNote !== null) {
             myNotes.splice(selectedNote, 1);
@@ -146,12 +142,9 @@ function Home() {
         return (
             <div>
                 <H3>Current User: {user.profile.email}</H3>
-
             </div>
         );
     }
-
-
 
     return (
 
@@ -169,7 +162,7 @@ function Home() {
                     {user ? <UserDetail user={user} /> : null}
                 </div>
             </div>
-
+                <Button onClick={initializeUserNotes}>Testing Button</Button>
             <Button className="signup-button" onClick={() => setOpenSignup(curr => !curr)}>Sign Up</Button>
             <Modal open={openSignup} setOpen={setOpenSignup}>
                 <TextInput
@@ -236,7 +229,9 @@ function Home() {
                 {myNotes ? myNotes.map((item, index) => {
                     return <Note key={index} cardId={index} data={item} handleEdit={handleNoteEdit} />
                 }) : null}
-
+                {notes ? notes.map((item, index) => {
+                    return <Note key={index} cardId={index} data={item} handleEdit={handleNoteEdit} />
+                }) : null}
             </div>
             <Form open={open} setOpen={setOpen} data={myNotes[selectedNote]} handleNoteSave={handleNoteSave} handleNoteDelete={handleNoteDelete} />
 
