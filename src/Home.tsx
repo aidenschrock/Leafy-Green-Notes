@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import React from "react";
 import './App.css';
 import { uiColors } from '@leafygreen-ui/palette';
@@ -8,7 +8,8 @@ import {
 } from '@leafygreen-ui/logo';
 import Icon from '@leafygreen-ui/icon';
 import Button from '@leafygreen-ui/button';
-import Form from './components/Form';
+import AddNoteForm from './components/AddNoteForm';
+import EditNoteForm from './components/EditNoteForm';
 import Note from './components/Note';
 import * as Realm from "realm-web";
 import Modal from '@leafygreen-ui/modal';
@@ -26,32 +27,64 @@ function Home() {
     const [openLogin, setOpenLogin] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [openBanner, setOpenBanner] = useState(false)
+    const [openConfirmEmailBanner, setOpenConfirmEmailBanner] = useState(false)
+    const [openLoginBanner, setOpenLoginBanner]=useState(false);
     const [open, setOpen] = useState(false);
-    const [selectedNote, setSelectedNote] = useState(-1)
-    const [notes, setNotes] = useState([])
+    const [openAddNote, setOpenAddNote] = useState(false);
+    const [selectedNote, setSelectedNote] = useState(-1);
+    const [notes, setNotes] = useState([]);
+    const [openInvalidLoginBanner, setOpenInvalidLoginBanner] = useState(false);
+    const [openInvalidSignupBanner, setOpenInvalidSignupBanner] = useState(false);
+    let currentURL=window.location;
 
-    window.onload = function exampleFunction() {
+    useEffect(()=> {
+        confirmEmail()
+    },[currentURL])
+
+    useEffect(()=>{
+        loadNotes()
+    })
+
+    
+
+    function confirmEmail() {
 
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
 
         if (window.location.href.indexOf("token") > -1) {
+            console.log("token")
             const token = urlParams.get('token');
             const tokenId = urlParams.get('tokenId');
             app.emailPasswordAuth.confirmUser(token, tokenId)
+            setOpenLoginBanner(curr => !curr)
         }
     }
 
+    function loadNotes(){
+        if(app.currentUser){
+            console.log("user")
+            getUserNotes()
+        }
+    }
 
     function signupUser(email, password) {
-        app.emailPasswordAuth.registerUser(email, password);
-        setOpenSignup(curr => !curr)
-        setOpenBanner(curr => !curr)
+        app.emailPasswordAuth.registerUser(email, password).then(()=>{
+            setOpenSignup(curr => !curr)
+            setOpenConfirmEmailBanner(curr => !curr)
+            setOpenInvalidSignupBanner(false)
+        }, (err)=> {
+            console.error("Failed to register user", err);
+            setOpenInvalidSignupBanner(true)
+        })
+
+    }
+    function cancelNoteAdd() {
+        setOpenAddNote(curr=>!curr)
     }
 
     async function loginUser(email: string, password: string) {
-        logoutUser()
+
         const credentials = Realm.Credentials.emailPassword(email, password);
         try {
             // Authenticate the user
@@ -61,10 +94,13 @@ function Home() {
             setUser(user)
 
             getUserNotes()
+            setOpenLoginBanner(false)
+            setOpenInvalidLoginBanner(false)
             setOpenLogin(curr => !curr)
             return user
         } catch (err) {
             console.error("Failed to log in", err);
+            setOpenInvalidLoginBanner(true)
         }
     }
 
@@ -72,7 +108,8 @@ function Home() {
         if (app.currentUser) {
             app.currentUser.logOut()
         }
-
+        setNotes([])
+        setUser(null)
     }
 
     function getUserNotes() {
@@ -88,7 +125,8 @@ function Home() {
         notesCollection.insertOne({ "title": title, "content": content, "owner_id": app.currentUser.id }).then(() =>
             getUserNotes()
         )
-        setOpen(curr => !curr)
+        setOpen(false)
+        setOpenAddNote(false)
 
     }
 
@@ -114,7 +152,8 @@ function Home() {
             getUserNotes()
         )
 
-        setOpen(curr => !curr)
+        setOpen(false)
+        setOpenAddNote(false)
     }
 
     function handleNoteSave({ title, content }) {
@@ -145,8 +184,17 @@ function Home() {
     return (
 
         <div style={{ backgroundColor: uiColors.white }} className="App">
-            {openBanner ?
-                <Banner dismissible={true} variant="warning" onClose={() => setOpenBanner(curr => !curr)}>Confirm your email address. Check your inbox for the email address associated with your Leafy Green Notes account.</Banner>
+            {openConfirmEmailBanner ?
+                <Banner dismissible={true} variant="warning" onClose={() => setOpenConfirmEmailBanner(curr => !curr)}>Confirm your email address. Check your inbox for the email address associated with your Leafy Green Notes account.</Banner>
+                : null}
+                       {openLoginBanner ?
+                <Banner dismissible={true} variant="success" onClose={() => setOpenLoginBanner(curr => !curr)}>Email confirmed! Please login to your account.</Banner>
+                : null}
+                {openInvalidLoginBanner ?
+                <Banner dismissible={true} variant="danger" onClose={() => setOpenInvalidLoginBanner(curr => !curr)}>Invalid login credentials. Please try again.</Banner>
+                : null}
+                {openInvalidSignupBanner ?
+                <Banner dismissible={true} variant="danger" onClose={() => setOpenInvalidSignupBanner(curr => !curr)}>Could not register user. Please make sure to enter a valid email address and password.</Banner>
                 : null}
             <div className="header">
                 <H1 style={{ color: uiColors.green.base }}>Leafy Green Notes
@@ -167,6 +215,7 @@ function Home() {
                     className="input"
                     type="email"
                     label="Email"
+                    errorMessage="Email address invalid."
                     description="Enter your email below"
                     placeholder="your.email@example.com"
 
@@ -179,6 +228,7 @@ function Home() {
                     className="input"
                     type="password"
                     label="Password"
+                    errorMessage="Password Invalid. Please ensure it is at least 6 characters long and contains a number and a symbol."
                     description="Enter your password below"
 
                     onChange={event => {
@@ -194,6 +244,7 @@ function Home() {
                     className="input"
                     type="email"
                     label="Email"
+                    errorMessage="Email address invalid."
                     description="Enter your email below"
                     placeholder="your.email@example.com"
 
@@ -206,6 +257,7 @@ function Home() {
                     className="input"
                     type="password"
                     label="Password"
+                    errorMessage="Incorrect password."
                     description="Enter your password below"
 
                     onChange={event => {
@@ -219,7 +271,7 @@ function Home() {
                 <div className="add-note">
                     <Button className="add-icon" aria-label="Add Note" leftGlyph={<Icon glyph={'PlusWithCircle'} />} onClick={() => {
                         setSelectedNote(-1)
-                        setOpen(curr => !curr)
+                        setOpenAddNote(curr => !curr)
                     }}>
                         Add Note
                     </Button>
@@ -230,7 +282,8 @@ function Home() {
                 }) : null}
             </div>
 
-            <Form open={open} setOpen={setOpen} data={notes[selectedNote]} handleNoteSave={handleNoteSave} handleNoteDelete={handleNoteDelete} />
+            <EditNoteForm open={open} setOpen={setOpen} data={notes[selectedNote]} handleNoteSave={handleNoteSave} handleNoteDelete={handleNoteDelete} />
+            <AddNoteForm open={openAddNote} setOpen={setOpenAddNote} handleNoteSave={handleNoteSave} handleCancel={cancelNoteAdd}/>
 
         </div>
     );

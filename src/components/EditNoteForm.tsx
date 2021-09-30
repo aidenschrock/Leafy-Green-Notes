@@ -12,7 +12,7 @@ interface FuncProps {
     data: any;
 }
 
-const Form: React.FC<FuncProps> = (props) => {
+const EditNoteForm: React.FC<FuncProps> = (props) => {
     const [title, setTitle] = useState(props.data?.title ?? '');
     const [content, setContent] = useState(props.data?.content ?? '');
 
@@ -54,4 +54,4 @@ const Form: React.FC<FuncProps> = (props) => {
 
 
 
-export default Form;
+export default EditNoteForm;
