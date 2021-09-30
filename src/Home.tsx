@@ -1,4 +1,4 @@
-import { useState} from 'react';
+import { useState } from 'react';
 import React from "react";
 import './App.css';
 import { uiColors } from '@leafygreen-ui/palette';
@@ -17,20 +17,6 @@ import Banner from '@leafygreen-ui/banner';
 
 const REALM_APP_ID = "leafy-green-notes-uwhsz";
 const app: Realm.App = new Realm.App({ id: REALM_APP_ID });
-const mongodb = app.currentUser.mongoClient("mongodb-atlas");
-const notesCollection=mongodb.db('Leafy-Green-Notes').collection("Notes")
-
-// Load
-let myNotes
-if (!localStorage.getItem('myNotes')) {
-    localStorage.setItem('myNotes', JSON.stringify([]))
-} else {
-    myNotes = JSON.parse(localStorage.getItem('myNotes'))
-}
-
-function saveNotesChanges() {
-    localStorage.setItem('myNotes', JSON.stringify(myNotes))
-}
 
 var assert = require('assert')
 
@@ -46,14 +32,11 @@ function Home() {
     const [notes, setNotes] = useState([])
 
     window.onload = function exampleFunction() {
-        
+
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
-        // const urlParams = new URLSearchParams(window.location.search);
+
         if (window.location.href.indexOf("token") > -1) {
-            console.log('token')
-            console.log(urlParams.get('token'));
-            console.log(urlParams.get('tokenId'));
             const token = urlParams.get('token');
             const tokenId = urlParams.get('tokenId');
             app.emailPasswordAuth.confirmUser(token, tokenId)
@@ -68,7 +51,7 @@ function Home() {
     }
 
     async function loginUser(email: string, password: string) {
-        // Create an anonymous credential
+        logoutUser()
         const credentials = Realm.Credentials.emailPassword(email, password);
         try {
             // Authenticate the user
@@ -76,39 +59,62 @@ function Home() {
             // `App.currentUser` updates to match the logged in user
             assert(user.id === app.currentUser.id)
             setUser(user)
+
+            getUserNotes()
             setOpenLogin(curr => !curr)
             return user
         } catch (err) {
             console.error("Failed to log in", err);
         }
     }
-   
-    function getUserNotes(){
+
+    function logoutUser() {
+        if (app.currentUser) {
+            app.currentUser.logOut()
+        }
+
+    }
+
+    function getUserNotes() {
+        let mongodb = app.currentUser.mongoClient("mongodb-atlas");
+        const notesCollection = mongodb.db('Leafy-Green-Notes').collection("Notes")
         notesCollection.find().then(notes => setNotes(notes))
     }
-    
+
 
     function createNote(title, content) {
-        notesCollection.insertOne({"title": title, "content": content, "owner_id":app.currentUser.id})
+        let mongodb = app.currentUser.mongoClient("mongodb-atlas");
+        const notesCollection = mongodb.db('Leafy-Green-Notes').collection("Notes")
+        notesCollection.insertOne({ "title": title, "content": content, "owner_id": app.currentUser.id }).then(() =>
+            getUserNotes()
+        )
         setOpen(curr => !curr)
-        saveNotesChanges()
+
     }
 
     function editNote(selectedNoteIndex, title, content) {
-        const currentTitle=notes[selectedNoteIndex].title
-        const currentContent=notes[selectedNoteIndex].content
-        notesCollection.updateOne({"title": currentTitle, "content": currentContent}, {$set: {"title": title, "content": content}})
+        let mongodb = app.currentUser.mongoClient("mongodb-atlas");
+        const notesCollection = mongodb.db('Leafy-Green-Notes').collection("Notes")
+        const currentTitle = notes[selectedNoteIndex].title
+        const currentContent = notes[selectedNoteIndex].content
+        notesCollection.updateOne({ "title": currentTitle, "content": currentContent }, { $set: { "title": title, "content": content } })
+            .then(() =>
+                getUserNotes()
+            )
         setOpen(curr => !curr)
-        saveNotesChanges()
+
     }
 
     function handleNoteDelete() {
-        console.log(notes[selectedNote])
-        const currentTitle=notes[selectedNote].title
-        const currentContent=notes[selectedNote].content
-        notesCollection.deleteOne({"title": currentTitle, "content": currentContent})
+        let mongodb = app.currentUser.mongoClient("mongodb-atlas");
+        const notesCollection = mongodb.db('Leafy-Green-Notes').collection("Notes")
+        const currentTitle = notes[selectedNote].title
+        const currentContent = notes[selectedNote].content
+        notesCollection.deleteOne({ "title": currentTitle, "content": currentContent }).then(() =>
+            getUserNotes()
+        )
+
         setOpen(curr => !curr)
-        saveNotesChanges()
     }
 
     function handleNoteSave({ title, content }) {
@@ -125,7 +131,6 @@ function Home() {
         setSelectedNote(noteIndex);
         setOpen(curr => !curr)
     }
-
 
 
     // Create a component that displays the given user's details
@@ -153,8 +158,10 @@ function Home() {
                     {user ? <UserDetail user={user} /> : null}
                 </div>
             </div>
-                <Button onClick={getUserNotes}>Testing Button</Button>
-            <Button className="signup-button" onClick={() => setOpenSignup(curr => !curr)}>Sign Up</Button>
+
+            {user ? <Button onClick={() => logoutUser()}>Logout</Button> : <Button className="login-button" onClick={() => setOpenLogin(curr => !curr)}>Login</Button>}
+            {!user ? <Button className="signup-button" onClick={() => setOpenSignup(curr => !curr)}>Sign Up</Button> : null}
+
             <Modal open={openSignup} setOpen={setOpenSignup}>
                 <TextInput
                     className="input"
@@ -181,7 +188,7 @@ function Home() {
                 />
                 <Button variant={'primary'} onClick={() => signupUser(email, password)}>Submit</Button>
             </Modal>
-            <Button className="login-button" onClick={() => setOpenLogin(curr => !curr)}>Login</Button>
+
             <Modal open={openLogin} setOpen={setOpenLogin}>
                 <TextInput
                     className="input"
@@ -217,16 +224,13 @@ function Home() {
                         Add Note
                     </Button>
                 </div>
-                {myNotes ? myNotes.map((item, index) => {
-                    return <Note key={index} cardId={index} data={item} handleEdit={handleNoteEdit} />
-                }) : null}
-                {notes ? notes.map((item, index) => {
+
+                {(notes && user) ? notes.map((item, index) => {
                     return <Note key={index} cardId={index} data={item} handleEdit={handleNoteEdit} />
                 }) : null}
             </div>
-            <Form open={open} setOpen={setOpen} data={myNotes[selectedNote]} handleNoteSave={handleNoteSave} handleNoteDelete={handleNoteDelete} />
 
-
+            <Form open={open} setOpen={setOpen} data={notes[selectedNote]} handleNoteSave={handleNoteSave} handleNoteDelete={handleNoteDelete} />
 
         </div>
     );
