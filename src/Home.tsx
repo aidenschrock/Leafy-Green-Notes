@@ -33,7 +33,6 @@ function saveNotesChanges() {
 }
 
 var assert = require('assert')
-let notes=[];
 
 function Home() {
     const [user, setUser] = React.useState<Realm.User | null>(app.currentUser);
@@ -44,7 +43,7 @@ function Home() {
     const [openBanner, setOpenBanner] = useState(false)
     const [open, setOpen] = useState(false);
     const [selectedNote, setSelectedNote] = useState(-1)
-
+    const [notes, setNotes] = useState([])
 
     window.onload = function exampleFunction() {
         
@@ -84,38 +83,30 @@ function Home() {
         }
     }
    
-    async function initializeUserNotes(){
-        notes = await notesCollection.find()
-        console.log(notes)
-        console.log('it ran!')
+    function getUserNotes(){
+        notesCollection.find().then(notes => setNotes(notes))
     }
     
 
     function createNote(title, content) {
-        myNotes.push({
-            title: title,
-            content: content
-        })
-        
         notesCollection.insertOne({"title": title, "content": content, "owner_id":app.currentUser.id})
         setOpen(curr => !curr)
         saveNotesChanges()
     }
 
     function editNote(selectedNoteIndex, title, content) {
-        myNotes[selectedNoteIndex] = {
-            title: title,
-            content: content
-        }
+        const currentTitle=notes[selectedNoteIndex].title
+        const currentContent=notes[selectedNoteIndex].content
+        notesCollection.updateOne({"title": currentTitle, "content": currentContent}, {$set: {"title": title, "content": content}})
         setOpen(curr => !curr)
         saveNotesChanges()
     }
 
     function handleNoteDelete() {
-        console.log(selectedNote)
-        if (selectedNote > -1 && selectedNote !== null) {
-            myNotes.splice(selectedNote, 1);
-        }
+        console.log(notes[selectedNote])
+        const currentTitle=notes[selectedNote].title
+        const currentContent=notes[selectedNote].content
+        notesCollection.deleteOne({"title": currentTitle, "content": currentContent})
         setOpen(curr => !curr)
         saveNotesChanges()
     }
@@ -162,7 +153,7 @@ function Home() {
                     {user ? <UserDetail user={user} /> : null}
                 </div>
             </div>
-                <Button onClick={initializeUserNotes}>Testing Button</Button>
+                <Button onClick={getUserNotes}>Testing Button</Button>
             <Button className="signup-button" onClick={() => setOpenSignup(curr => !curr)}>Sign Up</Button>
             <Modal open={openSignup} setOpen={setOpenSignup}>
                 <TextInput
