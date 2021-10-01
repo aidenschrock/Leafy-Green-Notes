@@ -28,24 +28,29 @@ function Home() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [openConfirmEmailBanner, setOpenConfirmEmailBanner] = useState(false)
-    const [openLoginBanner, setOpenLoginBanner]=useState(false);
+    const [openLoginBanner, setOpenLoginBanner] = useState(false);
     const [open, setOpen] = useState(false);
     const [openAddNote, setOpenAddNote] = useState(false);
     const [selectedNote, setSelectedNote] = useState(-1);
     const [notes, setNotes] = useState([]);
     const [openInvalidLoginBanner, setOpenInvalidLoginBanner] = useState(false);
     const [openInvalidSignupBanner, setOpenInvalidSignupBanner] = useState(false);
-    let currentURL=window.location;
+    let currentURL = window.location;
 
-    useEffect(()=> {
+    useEffect(() => {
         confirmEmail()
-    },[currentURL])
+    }, [currentURL])
 
-    useEffect(()=>{
-        loadNotes()
-    })
+    useEffect(() => {
+        if (app.currentUser) {
+            let mongodb = app.currentUser.mongoClient("mongodb-atlas");
+            const notesCollection = mongodb.db('Leafy-Green-Notes').collection("Notes")
+            notesCollection.find().then(notes => setNotes(notes))
+        }
 
-    
+    }, [notes])
+
+
 
     function confirmEmail() {
 
@@ -58,29 +63,24 @@ function Home() {
             const tokenId = urlParams.get('tokenId');
             app.emailPasswordAuth.confirmUser(token, tokenId)
             setOpenLoginBanner(curr => !curr)
+            window.history.replaceState({}, document.title, "/Leafy-Green-Notes");
         }
     }
 
-    function loadNotes(){
-        if(app.currentUser){
-            console.log("user")
-            getUserNotes()
-        }
-    }
 
     function signupUser(email, password) {
-        app.emailPasswordAuth.registerUser(email, password).then(()=>{
+        app.emailPasswordAuth.registerUser(email, password).then(() => {
             setOpenSignup(curr => !curr)
             setOpenConfirmEmailBanner(curr => !curr)
             setOpenInvalidSignupBanner(false)
-        }, (err)=> {
+        }, (err) => {
             console.error("Failed to register user", err);
             setOpenInvalidSignupBanner(true)
         })
 
     }
     function cancelNoteAdd() {
-        setOpenAddNote(curr=>!curr)
+        setOpenAddNote(curr => !curr)
     }
 
     async function loginUser(email: string, password: string) {
@@ -187,13 +187,13 @@ function Home() {
             {openConfirmEmailBanner ?
                 <Banner dismissible={true} variant="warning" onClose={() => setOpenConfirmEmailBanner(curr => !curr)}>Confirm your email address. Check your inbox for the email address associated with your Leafy Green Notes account.</Banner>
                 : null}
-                       {openLoginBanner ?
+            {openLoginBanner ?
                 <Banner dismissible={true} variant="success" onClose={() => setOpenLoginBanner(curr => !curr)}>Email confirmed! Please login to your account.</Banner>
                 : null}
-                {openInvalidLoginBanner ?
+            {openInvalidLoginBanner ?
                 <Banner dismissible={true} variant="danger" onClose={() => setOpenInvalidLoginBanner(curr => !curr)}>Invalid login credentials. Please try again.</Banner>
                 : null}
-                {openInvalidSignupBanner ?
+            {openInvalidSignupBanner ?
                 <Banner dismissible={true} variant="danger" onClose={() => setOpenInvalidSignupBanner(curr => !curr)}>Could not register user. Please make sure to enter a valid email address and password.</Banner>
                 : null}
             <div className="header">
@@ -236,10 +236,12 @@ function Home() {
                     }}
 
                 />
-                <Button variant={'primary'} onClick={() => signupUser(email, password)}>Submit</Button>
+                <Button type="submit" variant={'primary'} onClick={() => signupUser(email, password)}>Submit</Button>
+
             </Modal>
 
             <Modal open={openLogin} setOpen={setOpenLogin}>
+
                 <TextInput
                     className="input"
                     type="email"
@@ -265,17 +267,18 @@ function Home() {
                     }}
 
                 />
-                <Button variant={'primary'} onClick={() => loginUser(email, password)}>Submit</Button>
+                <Button type="submit" variant={'primary'} onClick={() => loginUser(email, password)}>Submit</Button>
+
             </Modal>
             <div className="notes">
-                <div className="add-note">
+                {user ? <div className="add-note">
                     <Button className="add-icon" aria-label="Add Note" leftGlyph={<Icon glyph={'PlusWithCircle'} />} onClick={() => {
                         setSelectedNote(-1)
                         setOpenAddNote(curr => !curr)
                     }}>
                         Add Note
                     </Button>
-                </div>
+                </div> : null}
 
                 {(notes && user) ? notes.map((item, index) => {
                     return <Note key={index} cardId={index} data={item} handleEdit={handleNoteEdit} />
@@ -283,7 +286,7 @@ function Home() {
             </div>
 
             <EditNoteForm open={open} setOpen={setOpen} data={notes[selectedNote]} handleNoteSave={handleNoteSave} handleNoteDelete={handleNoteDelete} />
-            <AddNoteForm open={openAddNote} setOpen={setOpenAddNote} handleNoteSave={handleNoteSave} handleCancel={cancelNoteAdd}/>
+            <AddNoteForm open={openAddNote} setOpen={setOpenAddNote} handleNoteSave={handleNoteSave} handleCancel={cancelNoteAdd} />
 
         </div>
     );
