@@ -3,13 +3,25 @@
   height: 100vh;
 }
 
-.logo {
-  padding-left: 1%;
-  height: 1em;
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 2%;
 }
 
-.header {
-  padding-top: 2%;
+H1 {
+  padding-right: 2%;
+}
+
+.current-user {
+  padding: 1%;
+}
+.login-button {
+  margin-right: 2%;
+}
+.signup-button {
+  margin-left: 2%;
 }
 
 .notes {
@@ -52,6 +64,7 @@
 .save-button {
   width: 5em;
 }
+
 .delete-button {
   width: 5em;
   margin-right: 2%;
