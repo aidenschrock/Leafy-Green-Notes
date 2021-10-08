@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Modal from '@leafygreen-ui/modal';
 import TextInput from '@leafygreen-ui/text-input';
 import TextArea from '@leafygreen-ui/text-area';
@@ -18,27 +18,29 @@ const AddNoteForm: React.FC<FuncProps> = (props) => {
     return (
         <Modal className="edit-note" open={props.open} setOpen={props.setOpen}>
             <TextInput
+            data-testid="title-input"
                 name="note-title"
                 className="input"
                 label="Note Title"
                 placeholder="My Note"
-                // value={title}
                 onChange={event => {
                     setTitle(event.target.value)
                 }}
             />
             <TextArea
+            data-testid="content-input"
                 name="note-content"
                 className="input"
                 label="Note Content"
                 placeholder="Reminder: Eat more vegetables!"
-                // value={content}
                 onChange={event => {
                     setContent(event.target.value)
                 }}
             />
-            <Button onClick={() => props.handleCancel()} className="delete-button">Cancel</Button>
-            <Button onClick={() => props.handleNoteSave({
+            <Button id="cancel-button" onClick={() => props.handleCancel()} className="delete-button">Cancel</Button>
+            <Button 
+            id="save-button"
+            onClick={() => props.handleNoteSave({
                 title: title,
                 content: content
             })} variant={'primary'} className="save-button"> Save </Button>

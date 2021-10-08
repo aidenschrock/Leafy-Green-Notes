@@ -11,9 +11,9 @@ import Button from '@leafygreen-ui/button';
 import AddNoteForm from './components/AddNoteForm';
 import EditNoteForm from './components/EditNoteForm';
 import Note from './components/Note';
+import LoginForm from './components/LoginForm';
+import SignupForm from './components/SignupForm';
 import * as Realm from "realm-web";
-import Modal from '@leafygreen-ui/modal';
-import TextInput from '@leafygreen-ui/text-input';
 import Banner from '@leafygreen-ui/banner';
 
 const REALM_APP_ID = "leafy-green-notes-uwhsz";
@@ -25,8 +25,6 @@ function Home() {
     const [user, setUser] = React.useState<Realm.User | null>(app.currentUser);
     const [openSignup, setOpenSignup] = useState(false);
     const [openLogin, setOpenLogin] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [openConfirmEmailBanner, setOpenConfirmEmailBanner] = useState(false)
     const [openLoginBanner, setOpenLoginBanner] = useState(false);
     const [open, setOpen] = useState(false);
@@ -184,6 +182,7 @@ function Home() {
     return (
 
         <div style={{ backgroundColor: uiColors.white }} className="App">
+            
             {openConfirmEmailBanner ?
                 <Banner dismissible={true} variant="warning" onClose={() => setOpenConfirmEmailBanner(curr => !curr)}>Confirm your email address. Check your inbox for the email address associated with your Leafy Green Notes account.</Banner>
                 : null}
@@ -196,6 +195,7 @@ function Home() {
             {openInvalidSignupBanner ?
                 <Banner dismissible={true} variant="danger" onClose={() => setOpenInvalidSignupBanner(curr => !curr)}>Could not register user. Please make sure to enter a valid email address and password.</Banner>
                 : null}
+
             <div className="header">
                 <H1 style={{ color: uiColors.green.base }}>Leafy Green Notes
                 </H1>
@@ -210,66 +210,10 @@ function Home() {
             {user ? <Button onClick={() => logoutUser()}>Logout</Button> : <Button className="login-button" onClick={() => setOpenLogin(curr => !curr)}>Login</Button>}
             {!user ? <Button className="signup-button" onClick={() => setOpenSignup(curr => !curr)}>Sign Up</Button> : null}
 
-            <Modal open={openSignup} setOpen={setOpenSignup}>
-                <TextInput
-                    className="input"
-                    type="email"
-                    label="Email"
-                    errorMessage="Email address invalid."
-                    description="Enter your email below"
-                    placeholder="your.email@example.com"
+            <SignupForm open={openSignup} setOpen={setOpenSignup} handleSubmit={signupUser}/>
 
-                    onChange={event => {
-                        setEmail(event.target.value)
-                    }}
-
-                />
-                <TextInput
-                    className="input"
-                    type="password"
-                    label="Password"
-                    errorMessage="Password Invalid. Please ensure it is at least 6 characters long and contains a number and a symbol."
-                    description="Enter your password below"
-
-                    onChange={event => {
-                        setPassword(event.target.value)
-                    }}
-
-                />
-                <Button type="submit" variant={'primary'} onClick={() => signupUser(email, password)}>Submit</Button>
-
-            </Modal>
-
-            <Modal open={openLogin} setOpen={setOpenLogin}>
-
-                <TextInput
-                    className="input"
-                    type="email"
-                    label="Email"
-                    errorMessage="Email address invalid."
-                    description="Enter your email below"
-                    placeholder="your.email@example.com"
-
-                    onChange={event => {
-                        setEmail(event.target.value)
-                    }}
-
-                />
-                <TextInput
-                    className="input"
-                    type="password"
-                    label="Password"
-                    errorMessage="Incorrect password."
-                    description="Enter your password below"
-
-                    onChange={event => {
-                        setPassword(event.target.value)
-                    }}
-
-                />
-                <Button type="submit" variant={'primary'} onClick={() => loginUser(email, password)}>Submit</Button>
-
-            </Modal>
+            <LoginForm open={openLogin} setOpen={setOpenLogin} handleSubmit={loginUser}/>
+               
             <div className="notes">
                 {user ? <div className="add-note">
                     <Button className="add-icon" aria-label="Add Note" leftGlyph={<Icon glyph={'PlusWithCircle'} />} onClick={() => {

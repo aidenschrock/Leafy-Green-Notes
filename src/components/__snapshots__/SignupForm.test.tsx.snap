@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SignupForm should render correctly 1`] = `
+<Modal
+  open={true}
+  setOpen={null}
+>
+  <TextInput
+    className="input"
+    data-testid="email-input"
+    description="Enter your email below"
+    errorMessage="Email address invalid."
+    label="Email"
+    onChange={[Function]}
+    placeholder="your.email@example.com"
+    type="email"
+  />
+  <TextInput
+    className="input"
+    data-testid="password-input"
+    description="Enter your password below"
+    errorMessage="Password Invalid. Please ensure it is at least 6 characters long and contains a number and a symbol."
+    label="Password"
+    onChange={[Function]}
+    type="password"
+  />
+  <Button
+    id="submit-button"
+    onClick={[Function]}
+    type="submit"
+    variant="primary"
+  >
+    Submit
+  </Button>
+</Modal>
+`;

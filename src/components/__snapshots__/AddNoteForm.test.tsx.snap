@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AddNoteForm should render correctly 1`] = `
+<Modal
+  className="edit-note"
+  open={true}
+  setOpen={null}
+>
+  <TextInput
+    className="input"
+    data-testid="title-input"
+    label="Note Title"
+    name="note-title"
+    onChange={[Function]}
+    placeholder="My Note"
+  />
+  <TextArea
+    className="input"
+    data-testid="content-input"
+    label="Note Content"
+    name="note-content"
+    onChange={[Function]}
+    placeholder="Reminder: Eat more vegetables!"
+  />
+  <Button
+    className="delete-button"
+    id="cancel-button"
+    onClick={[Function]}
+  >
+    Cancel
+  </Button>
+  <Button
+    className="save-button"
+    id="save-button"
+    onClick={[Function]}
+    variant="primary"
+  >
+     Save 
+  </Button>
+</Modal>
+`;

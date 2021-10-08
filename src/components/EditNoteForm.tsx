@@ -24,6 +24,7 @@ const EditNoteForm: React.FC<FuncProps> = (props) => {
     return (
         <Modal className="edit-note" open={props.open} setOpen={props.setOpen}>
             <TextInput
+                data-testid="title-input"
                 name="note-title"
                 className="input"
                 label="Note Title"
@@ -34,6 +35,7 @@ const EditNoteForm: React.FC<FuncProps> = (props) => {
                 }}
             />
             <TextArea
+                data-testid="content-input"
                 name="note-content"
                 className="input"
                 label="Note Content"
@@ -43,8 +45,8 @@ const EditNoteForm: React.FC<FuncProps> = (props) => {
                     setContent(event.target.value)
                 }}
             />
-            <Button onClick={() => props.handleNoteDelete()} className="delete-button" variant={'danger'}>Delete</Button>
-            <Button onClick={() => props.handleNoteSave({
+            <Button id="delete-button" onClick={() => props.handleNoteDelete()} className="delete-button" variant={'danger'}>Delete</Button>
+            <Button id="save-button" onClick={() => props.handleNoteSave({
                 title: title,
                 content: content
             })} variant={'primary'} className="save-button"> Save </Button>
