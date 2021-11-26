@@ -3,6 +3,12 @@
   height: 100vh;
 }
 
+.source-code-badge {
+  margin: 1%;
+  width: 100%;
+  text-align: left;
+}
+
 .header {
   display: flex;
   flex-direction: row;

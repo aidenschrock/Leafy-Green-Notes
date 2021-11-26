@@ -195,7 +195,11 @@ function Home() {
             {openInvalidSignupBanner ?
                 <Banner dismissible={true} variant="danger" onClose={() => setOpenInvalidSignupBanner(curr => !curr)}>Could not register user. Please make sure to enter a valid email address and password.</Banner>
                 : null}
-
+            <div className="source-code-badge">
+                <a target="_blank" rel="noreferrer" href="https://github.com/aidenschrock/Leafy-Green-Notes">
+                    <img alt="Made With Love Badge" src="https://img.shields.io/badge/Made With-♥-brightgreen"/>
+                </a>
+            </div>
             <div className="header">
                 <H1 style={{ color: uiColors.green.base }}>Leafy Green Notes
                 </H1>
